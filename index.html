@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gym Daily Workout</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('background.avif');
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+      background-repeat: no-repeat;
+      font-family: 'Poppins', sans-serif;
+      color: #fff;
+    }
+
+    .exercise-card {
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .exercise-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+    .exercise-img {
+      border-radius: 8px;
+      height: 180px;
+      object-fit: cover;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .streak-box {
+      background-color: #202020;
+      padding: 1rem;
+      border-radius: 10px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .progress {
+      height: 8px;
+    }
+    .timer-box {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .rest-timer {
+      font-size: 1.5rem;
+      color: #0f0;
+    }
+    .rest-btn {
+      margin-top: 10px;
+    }
+
+    .modal-content {
+  border-radius: 15px;
+}
+.modal-body ul {
+  padding-left: 20px;
+}
+.modal-body li {
+  margin-bottom: 6px;
+}
+
+  </style>
+</head>
+<body>
+
+  <div class="container py-5">
+    <h2 class="text-center text-danger mb-4">🏋️‍♂️ Weekly Gym Workout Plan</h2>
+
+    <div class="streak-box">
+      <h5>🔥 Streak: <span id="streakCount">0</span> Days</h5>
+    </div>
+
+    <div class="timer-box">
+      <div class="rest-timer" id="restTimer">00:00</div>
+      <button class="btn btn-success rest-btn" onclick="startRest()">Start 60s Rest</button>
+    </div>
+
+    <ul class="nav nav-tabs justify-content-center" id="myTab" role="tablist">
+      <script>
+        const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+        document.write(days.map((day, index) => `
+          <li class="nav-item" role="presentation">
+            <button class="nav-link ${index === 0 ? 'active' : ''}" 
+                    id="${day}-tab" data-bs-toggle="tab" 
+                    data-bs-target="#${day}" type="button" role="tab">
+              ${day}
+            </button>
+          </li>
+        `).join(''));
+      </script>
+    </ul>
+
+    <div class="tab-content mt-4" id="myTabContent"></div>
+  </div>
+
+  <script>
+    const exerciseImages = {
+      // New cards
+      "Jump Rope": "https://fitnessprogramer.com/wp-content/uploads/2023/10/Skip-Jump-Rope.gif",
+      "Plank Hold": "https://fitnessprogramer.com/wp-content/uploads/2021/02/plank.gif",
+      
+
+
+    
+
+      // Existing
+      "Bench Press": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Bench-Press.gif",
+      "Dumbbell Chest Fly": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Fly.gif",
+      "Incline Dumbbell Chest Press": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Incline-dumbbell-Fly.gif",
+      "Low Cable Chest Fly": "https://i.pinimg.com/originals/05/f6/4e/05f64e5dd8e1ed7798c58b8dbbb83aa9.gif",
+      "High Cable Chest Fly": "https://i.pinimg.com/originals/57/30/31/5730314e8ab933d784e401e6227e296d.gif",
+      "Parallel Bar Dips": "https://fitnessprogramer.com/wp-content/uploads/2021/06/Chest-Dips.gif",
+      "Dumbbell Pullover": "https://fitnessprogramer.com/wp-content/uploads/2021/08/Dumbbell-Pullover-On-Stability-Ball.gif",
+      "Deadlifts": "https://www.kettlebellkings.com/cdn/shop/articles/barbell-deadlift-movement.gif?v=1692228918",
+      "Pull-ups": "https://fitnessprogramer.com/wp-content/uploads/2022/01/jumping-pull-up.gif",
+      "Bent-Over Rows": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Bent-Over-Dumbbell-Row.gif",
+      "T-Bar Rows": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Lever-T-bar-Row.gif",
+      "Seated Cable Rows": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Seated-Cable-Row.gif",
+      "Single-Arm Dumbbell Rows": "https://fitliferegime.com/wp-content/uploads/2023/05/One-Arm-Dumbbell-Row.gif",
+      "Lat Pulldowns": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Lat-Pulldown.gif",
+      "Barbell Curl": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Curl.gif",
+      "Concentration Curl": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Concentration-Curl.gif",
+      "Hammer Curl": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Hammer-Curl.gif",
+      "Preacher Curl": "https://i.pinimg.com/originals/14/49/c1/1449c166c96b868ed52b019d98250987.gif",
+      "Incline Dumbbell Curl": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Seated-Incline-Dumbbell-Curl.gif",
+      "Chin-Up": "https://fitnessprogramer.com/wp-content/uploads/2022/08/neutral-grip-pull-up.gif",
+      "Cable Curl": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Cable-Reverse-Grip-EZ-bar-Biceps-Curl.gif",
+      "Diamond Push-Ups": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Diamond-Push-up.gif",
+      "Triceps Kickbacks": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Bent-Over-Triceps-Kickback.gif",
+      "Triceps Dips": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Triceps-Dips-on-Floor.gif",
+      "Overhead Triceps Extensions": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Triceps-Extension.gif",
+      "Rope Pushdowns": "https://i.pinimg.com/originals/a6/f8/51/a6f8518120f6f2860a8dc1a694c7f967.gif",
+      "Bar Pushdowns": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Pushdown.gif",
+      "Lying Triceps Extensions": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Barbell-Triceps-Extension.gif",
+      "Overhead Press": "https://fitnessprogramer.com/wp-content/uploads/2021/07/Barbell-Standing-Military-Press.gif",
+      "Lateral Raise": "https://fitnessprogramer.com/wp-content/uploads/2022/02/Dumbbell-4-Ways-Lateral-Raise.gif",
+      "Front Raise": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Dumbbell-Front-Raise.gif",
+      "Arnold Press": "https://homeworkouts.org/wp-content/uploads/anim-dumbbell-arnold-press.gif",
+      "Upright Row": "https://fitnessprogramer.com/wp-content/uploads/2021/04/Dumbbell-Upright-Row.gif",
+      "Rear Delt Fly": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Rear-Delt-Machine-Flys.gif",
+      "Face Pull": "https://fitnessprogramer.com/wp-content/uploads/2021/02/Face-Pull.gif",
+      "Back Squat": "https://fitnessprogramer.com/wp-content/uploads/2021/02/BARBELL-SQUAT.gif",
+      "Front Squat": "https://www.inspireusafoundation.org/wp-content/uploads/2023/08/dumbbell-goblet-squat-muscles.gif",
+      "Romanian Deadlift": "https://fitnessprogramer.com/wp-content/uploads/2022/10/Landmine-Deadlift.gif",
+      "Good Mornings": "https://www.inspireusafoundation.org/wp-content/uploads/2022/09/barbell-good-morning.gif",
+      "Walking Lunges": "https://fitnessprogramer.com/wp-content/uploads/2023/09/High-Knee-Lunge-on-Bosu-Ball.gif",
+      "Reverse Lunge": "https://fitnessprogramer.com/wp-content/uploads/2023/10/Static-Lunge.gif",
+      "Lateral Lunge": "https://fitnessprogramer.com/wp-content/uploads/2021/05/Barbell-Lateral-Lunge.gif",
+    };
+
+    const workouts = {
+      Monday: ["Bench Press", "Dumbbell Chest Fly", "Incline Dumbbell Chest Press", "Low Cable Chest Fly", "High Cable Chest Fly", "Parallel Bar Dips", "Dumbbell Pullover", "Jump Rope", "Plank Hold"],
+      Tuesday: ["Deadlifts", "Pull-ups", "Bent-Over Rows", "T-Bar Rows", "Seated Cable Rows", "Single-Arm Dumbbell Rows", "Lat Pulldowns", "Jump Rope", "Plank Hold"],
+      Wednesday: ["Barbell Curl", "Concentration Curl", "Hammer Curl", "Preacher Curl", "Incline Dumbbell Curl", "Chin-Up", "Cable Curl", "Jump Rope", "Plank Hold"],
+      Thursday: ["Diamond Push-Ups", "Triceps Kickbacks", "Triceps Dips", "Overhead Triceps Extensions", "Rope Pushdowns", "Bar Pushdowns", "Lying Triceps Extensions", "Jump Rope", "Plank Hold"],
+      Friday: ["Overhead Press", "Lateral Raise", "Front Raise", "Arnold Press", "Upright Row", "Rear Delt Fly", "Face Pull", "Jump Rope", "Plank Hold"],
+      Saturday: ["Back Squat", "Front Squat", "Romanian Deadlift", "Good Mornings", "Walking Lunges", "Reverse Lunge", "Lateral Lunge", "Jump Rope", "Plank Hold"],
+      Sunday: ["Rest Day — Stay Strong! Rest and Recharge 💪"]
+    };
+
+    const content = document.getElementById('myTabContent');
+    Object.entries(workouts).forEach(([day, exercises], index) => {
+      const isRest = day === "Sunday";
+      const innerHTML = isRest ? `
+        <div class="alert alert-success text-center">${exercises[0]}</div>
+      ` : exercises.map((exercise, i) => `
+        <div class="col-md-6 col-lg-4">
+          <div class="card exercise-card p-3">
+            <img src="${exerciseImages[exercise] || 'default.jpg'}" class="exercise-img mb-2" alt="${exercise}" />
+            <h5 class="text-danger">${exercise}</h5>
+            <p>4 Sets × 12 Reps</p>
+            <label>Progress</label>
+            <div class="progress mb-1">
+              <div class="progress-bar bg-success" role="progressbar" style="width: ${getSavedProgress(day, i)}%" id="${day}-prog-${i}"></div>
+            </div>
+            <input type="range" min="0" max="100" value="${getSavedProgress(day, i)}" onchange="updateProgress('${day}', ${i}, this.value)">
+          </div>
+        </div>
+      `).join('');
+
+      content.innerHTML += `
+        <div class="tab-pane fade ${index === 0 ? 'show active' : ''}" id="${day}" role="tabpanel">
+          <div class="row gy-4">${innerHTML}</div>
+        </div>
+      `;
+    });
+
+    function updateProgress(day, index, val) {
+      localStorage.setItem(`${day}-${index}`, val);
+      document.getElementById(`${day}-prog-${index}`).style.width = val + "%";
+    }
+
+    function getSavedProgress(day, index) {
+      return localStorage.getItem(`${day}-${index}`) || 0;
+    }
+
+    // Streak Tracker
+    let streak = localStorage.getItem('gymStreak') || 0;
+    document.getElementById('streakCount').innerText = streak;
+    const today = new Date().toLocaleDateString();
+    if (localStorage.getItem('lastVisit') !== today) {
+      localStorage.setItem('lastVisit', today);
+      streak++;
+      localStorage.setItem('gymStreak', streak);
+      document.getElementById('streakCount').innerText = streak;
+    }
+
+    // Rest Timer
+    let timerInterval;
+    function startRest() {
+      clearInterval(timerInterval);
+      let time = 60;
+      const timerDisplay = document.getElementById('restTimer');
+      timerDisplay.textContent = '01:00';
+      timerInterval = setInterval(() => {
+        time--;
+        const min = String(Math.floor(time / 60)).padStart(2, '0');
+        const sec = String(time % 60).padStart(2, '0');
+        timerDisplay.textContent = `${min}:${sec}`;
+        if (time <= 0) clearInterval(timerInterval);
+      }, 1000);
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <div class="text-center my-4">
+  <button class="btn btn-warning btn-lg" data-bs-toggle="modal" data-bs-target="#dietModal">
+    🍽️ View Diet Plans
+  </button>
+</div>
+<div class="modal fade" id="dietModal" tabindex="-1" aria-labelledby="dietModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content bg-dark text-light">
+      <div class="modal-header">
+        <h5 class="modal-title" id="dietModalLabel">🍽️ Diet Plans</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <h4 class="text-success">💪 Muscle Gain Plan</h4>
+
+        <h5 class="mt-3">🥤 Pre-Workout Meal</h5>
+        <ul>
+          <li>Oats with banana and peanut butter</li>
+          <li>1 scoop whey protein + 1 banana</li>
+        </ul>
+
+        <h5>🍗 Post-Workout Meal</h5>
+        <ul>
+          <li>Grilled chicken breast + white rice or sweet potato</li>
+          <li>Protein shake + almonds</li>
+        </ul>
+
+        <h5>🍴 Full Day Meals</h5>
+        <ul>
+          <li><strong>Breakfast:</strong> 6 egg whites + 2 whole eggs + oats + banana</li>
+          <li><strong>Snack:</strong> Protein shake + handful of nuts</li>
+          <li><strong>Lunch:</strong> Grilled chicken + brown rice + vegetables</li>
+          <li><strong>Evening Snack:</strong> Greek yogurt + honey</li>
+          <li><strong>Dinner:</strong> Salmon or tofu + quinoa + salad</li>
+          <li><strong>Before Bed:</strong> Cottage cheese or casein protein</li>
+        </ul>
+
+        <hr class="text-muted" />
+
+        <h4 class="text-danger">🔥 Weight Loss Plan</h4>
+
+        <h5 class="mt-3">🥤 Pre-Workout Meal</h5>
+        <ul>
+          <li>Black coffee or green tea</li>
+          <li>1 boiled egg or a small handful of almonds</li>
+        </ul>
+
+        <h5>🍗 Post-Workout Meal</h5>
+        <ul>
+          <li>Grilled fish or chicken + steamed vegetables</li>
+          <li>Low-carb protein shake</li>
+        </ul>
+
+        <h5>🍴 Full Day Meals</h5>
+        <ul>
+          <li><strong>Breakfast:</strong> Scrambled eggs + avocado + black coffee</li>
+          <li><strong>Snack:</strong> Apple or boiled egg</li>
+          <li><strong>Lunch:</strong> Chicken breast + quinoa + mixed greens</li>
+          <li><strong>Snack:</strong> Protein shake or cucumber slices</li>
+          <li><strong>Dinner:</strong> Stir-fried veggies + tofu or grilled paneer</li>
+          <li><strong>Before Bed:</strong> Herbal tea or Greek yogurt (plain)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
